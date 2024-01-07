@@ -41,7 +41,7 @@ async fn main() {
         );
 
     let port = std::env::var("PORT").unwrap_or("3000".to_string());
-    let host = std::env::var("HOST").unwrap_or("127.0.0.1".to_string());
+    let host = std::env::var("HOST").unwrap_or("0.0.0.0".to_string());
     let server = host + ":" + &port;
 
     // run it
@@ -55,5 +55,5 @@ async fn main() {
 
 #[debug_handler]
 async fn version() -> Html<&'static str> {
-    Html("<h1>Hello, World!</h1>")
+    Html("<h1>Hedfdfdffdffdllo, World!</h1>")
 }

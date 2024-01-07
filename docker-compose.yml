@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  rustapi:
+    build: .
+    container_name: rust_api
+    command: cargo watch -x run
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - .:/usr/src/myapp
+    depends_on:
+      - db
+
+  db:
+    image: postgres:latest
+    container_name: db_api
+    environment:
+      POSTGRES_DB: rustapi
+      POSTGRES_USER: my_user
+      POSTGRES_PASSWORD: my_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
