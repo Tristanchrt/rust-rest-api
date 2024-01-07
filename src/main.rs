@@ -55,5 +55,5 @@ async fn main() {
 
 #[debug_handler]
 async fn version() -> Html<&'static str> {
-    Html("<h1>Hedfdfdffdffdllo, World!</h1>")
+    Html("<h1>Hello, World!</h1>")
 }

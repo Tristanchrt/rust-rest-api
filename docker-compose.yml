@@ -2,7 +2,9 @@ version: '3.8'
 
 services:
   rustapi:
-    build: .
+    build:
+      context: .
+      target: dev
     container_name: rust_api
     command: cargo watch -x run
     ports:
