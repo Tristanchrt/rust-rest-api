@@ -29,3 +29,19 @@ make runInitDB
 ```
 
 4. Go to ***localhost:3000***
+
+### User Management
+
+The user management feature provides essential operations related to user entities.
+
+- **List Users**
+  - Endpoint: `GET /users`
+  - Description: Retrieve a list of all users.
+
+- **Get a Single User**
+  - Endpoint: `GET /users/{id}`
+  - Description: Retrieve details for a specific user identified by their unique ID.
+
+- **Create a New User**
+  - Endpoint: `POST /users`
+  - Description: Create a new user with the provided information
