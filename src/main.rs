@@ -1,16 +1,25 @@
 use axum::{
-    extract::{rejection::JsonRejection, FromRequest, MatchedPath, Request, State},
+    extract::{MatchedPath, Request, State},
     http::StatusCode,
-    response::{IntoResponse, Response},
-    routing::post,
+    response::Json,
+    response::{Html, IntoResponse},
+    routing::{get, post},
+    Router,
 };
-use axum::{response::Html, routing::get, Router};
 use axum_macros::debug_handler;
 use dotenv::dotenv;
+mod blueprints;
 mod libs;
+mod user;
+use blueprints::users_controller::{create_user, get_user, list_users};
+use diesel::prelude::*;
 use libs::pool_creation;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use user::{
+    models_users::{NewUser, Users},
+    schema::users,
+};
 
 #[tokio::main]
 async fn main() {
@@ -24,27 +33,32 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    let app = Router::new().route("/api", get(version)).layer(
-        TraceLayer::new_for_http()
-            // Create our own span for the request and include the matched path. The matched
-            // path is useful for figuring out which handler the request was routed to.
-            .make_span_with(|req: &Request| {
-                let method = req.method();
-                let uri = req.uri();
+    let pool = pool_creation();
+    let app = Router::new()
+        .route("/api", get(version))
+        .route("/api/users/all", get(list_users))
+        .route("/api/users", post(create_user))
+        .route("/api/users/:id", get(get_user))
+        .with_state(pool)
+        .layer(
+            TraceLayer::new_for_http()
+                // Create our own span for the request and include the matched path. The matched
+                // path is useful for figuring out which handler the request was routed to.
+                .make_span_with(|req: &Request| {
+                    let method = req.method();
+                    let uri = req.uri();
 
-                let matched_path = req
-                    .extensions()
-                    .get::<MatchedPath>()
-                    .map(|matched_path| matched_path.as_str());
+                    let matched_path = req
+                        .extensions()
+                        .get::<MatchedPath>()
+                        .map(|matched_path| matched_path.as_str());
 
-                tracing::debug_span!("request", %method, %uri, matched_path)
-            })
-            .on_failure(()),
-    );
+                    tracing::debug_span!("request", %method, %uri, matched_path)
+                })
+                .on_failure(()),
+        );
 
     let app = app.fallback(handler_404);
-
-    let pool = pool_creation();
 
     let port = std::env::var("PORT").unwrap_or("3000".to_string());
     let host = std::env::var("HOST").unwrap_or("0.0.0.0".to_string());
@@ -65,11 +79,4 @@ async fn version() -> Html<&'static str> {
 #[debug_handler]
 async fn handler_404() -> impl IntoResponse {
     (StatusCode::NOT_FOUND, "nothing to see here")
-}
-
-fn internal_error<E>(err: E) -> (StatusCode, String)
-where
-    E: std::error::Error,
-{
-    (StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
 }

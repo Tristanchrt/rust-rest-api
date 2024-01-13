@@ -6,6 +6,8 @@ COPY . .
 
 RUN cargo build
 RUN cargo install cargo-watch
+RUN cargo install diesel_cli --no-default-features --features postgres
+
 CMD ["./target/myapp"]
 
 EXPOSE 3000

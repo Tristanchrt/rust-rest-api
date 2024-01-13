@@ -18,3 +18,4 @@ diesel_migrations = "2.1.0"
 deadpool-diesel = { version = "0.5.0", features = ["postgres"] }
 serde = { version = "1.0.195", features = ["derive"] }
 serde_json = "1.0.111"
+pwhash = "1"
