@@ -7,6 +7,7 @@ use axum::{
     Router,
 };
 use axum_macros::debug_handler;
+use diesel_migrations::{embed_migrations, EmbeddedMigrations};
 use dotenv::dotenv;
 mod blueprints;
 mod libs;
@@ -21,6 +22,8 @@ use user::{
     schema::users,
 };
 
+pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations/");
+
 #[tokio::main]
 async fn main() {
     dotenv().ok();
@@ -34,6 +37,7 @@ async fn main() {
         .init();
 
     let pool = pool_creation();
+
     let app = Router::new()
         .route("/api", get(version))
         .route("/api/users/all", get(list_users))

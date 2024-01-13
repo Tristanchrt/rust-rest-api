@@ -8,3 +8,12 @@ CARGO_TEST = $(CARGO) test
 
 run:
 	$(CARGO_BUILD) && $(CARGO_RUN)
+
+initDB:
+	docker exec -it rust_api diesel setup
+
+runMigration:
+	docker exec -it rust_api diesel migration run
+
+runInitDB: initDB runMigration
+
