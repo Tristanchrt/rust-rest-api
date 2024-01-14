@@ -16,4 +16,3 @@ runMigration:
 	docker exec -it rust_api diesel migration run
 
 runInitDB: initDB runMigration
-

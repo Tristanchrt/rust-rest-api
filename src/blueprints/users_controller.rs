@@ -62,7 +62,6 @@ pub async fn delete_user(
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
     let conn = pool.get().await.map_err(internal_error)?;
 
-    // Use Diesel to delete the user with the specified user_id
     let deleted_rows = conn
         .interact(move |conn| diesel::delete(users::table.find(user_id)).execute(conn))
         .await
