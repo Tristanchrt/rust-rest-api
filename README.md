@@ -42,6 +42,10 @@ The user management feature provides essential operations related to user entiti
   - Endpoint: `GET /users/{id}`
   - Description: Retrieve details for a specific user identified by their unique ID.
 
+- **Delete a User**
+  - Endpoint: `DELETE /users/{id}`
+  - Description: Delete one user for a specific user ID
+
 - **Create a New User**
   - Endpoint: `POST /users`
   - Description: Create a new user with the provided information

@@ -3,7 +3,7 @@ use axum::{
     http::StatusCode,
     response::Json,
     response::{Html, IntoResponse},
-    routing::{get, post},
+    routing::{delete, get, post},
     Router,
 };
 use axum_macros::debug_handler;
@@ -21,6 +21,8 @@ use user::{
     models_users::{NewUser, Users},
     schema::users,
 };
+
+use crate::blueprints::users_controller::delete_user;
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations/");
 
@@ -43,6 +45,7 @@ async fn main() {
         .route("/api/users/all", get(list_users))
         .route("/api/users", post(create_user))
         .route("/api/users/:id", get(get_user))
+        .route("/api/users/:id", delete(delete_user))
         .with_state(pool)
         .layer(
             TraceLayer::new_for_http()
