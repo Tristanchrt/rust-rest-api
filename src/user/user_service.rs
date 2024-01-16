@@ -38,8 +38,8 @@ impl UserService<Users> for ConcreteUserService {
     }
 }
 
-impl ConcreteUserService {
-    pub fn new() -> Self {
-        ConcreteUserService
-    }
-}
+// impl ConcreteUserService {
+//     pub fn new() -> Self {
+//         ConcreteUserService
+//     }
+// }

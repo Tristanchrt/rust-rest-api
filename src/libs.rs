@@ -1,6 +1,5 @@
 use axum::http::StatusCode;
 use axum::Error;
-use deadpool_diesel::postgres::Object;
 use deadpool_diesel::{postgres::Manager, Pool};
 use dotenv::dotenv;
 use std::env;

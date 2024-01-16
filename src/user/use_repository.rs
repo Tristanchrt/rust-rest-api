@@ -6,25 +6,15 @@ use deadpool_diesel::{
 use pwhash::bcrypt;
 
 use crate::libs::{internal_error, pool_creation};
-use diesel::{prelude::*, result::Error};
+use diesel::{
+    prelude::*,
+    result::Error::{self, NotFound},
+};
 
 use super::{
     models_users::{NewUser, Users},
     schema::users,
 };
-
-// impl DieselRepository {
-//     pub async fn new_pool(url_db: &str) -> Result<Obj, ()> {
-//         let tmp = pool_creation().get().await.map_err(internal_error)?;
-//         match tmp {
-//             Ok(value) => Ok(Self {
-//                 db_pool: Some(value),
-//             }),
-//             Err(err) => Err(()),
-//         }
-//     }
-// }
-
 #[async_trait]
 pub trait UserRepository<T> {
     async fn insert(&self, user: NewUser) -> Result<T, Error>;
@@ -40,14 +30,9 @@ pub struct ConcreteUserRepository {
 #[async_trait]
 impl UserRepository<Users> for ConcreteUserRepository {
     async fn insert(&self, mut user: NewUser) -> Result<Users, Error> {
-        let conn = self
-            .db_pool
-            .get()
-            .await
-            .map_err(|err| Error::DatabaseError)
-            .expect("Db error");
+        let conn = self.db_pool.get().await.map_err(|err| Error::NotFound)?;
 
-        user.password = bcrypt::hash(user.password).expect("Error hashing password");
+        user.password = bcrypt::hash(user.password).expect("Hashing password not working");
 
         let res: Result<Users, diesel::result::Error> = conn
             .interact(|conn| {
@@ -84,10 +69,10 @@ impl UserRepository<Users> for ConcreteUserRepository {
     }
 }
 
-impl ConcreteUserRepository {
-    pub fn new() -> Self {
-        ConcreteUserRepository {
-            db_pool: pool_creation(), // assuming pool_creation is defined
-        }
-    }
-}
+// impl ConcreteUserRepository {
+//     pub fn new() -> Self {
+//         ConcreteUserRepository {
+//             db_pool: pool_creation(), // assuming pool_creation is defined
+//         }
+//     }
+// }

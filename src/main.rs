@@ -17,10 +17,7 @@ use diesel::prelude::*;
 use libs::pool_creation;
 use tower_http::trace::TraceLayer;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use user::{
-    models_users::{NewUser, Users},
-    schema::users,
-};
+use user::schema::users;
 
 use crate::blueprints::users_controller::delete_user;
 
