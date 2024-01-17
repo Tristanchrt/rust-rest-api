@@ -35,15 +35,12 @@ async fn main() {
         .with(tracing_subscriber::fmt::layer())
         .init();
 
-    let pool = pool_creation();
-
     let app = Router::new()
         .route("/api", get(version))
         .route("/api/users/all", get(list_users))
         .route("/api/users", post(create_user))
         .route("/api/users/:id", get(get_user))
         .route("/api/users/:id", delete(delete_user))
-        .with_state(pool)
         .layer(
             TraceLayer::new_for_http()
                 // Create our own span for the request and include the matched path. The matched

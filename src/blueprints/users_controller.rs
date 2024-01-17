@@ -1,7 +1,9 @@
+use crate::user::user_service::ConcreteUserService;
 use crate::users;
 use crate::{
     libs::internal_error,
     user::models_users::{NewUser, Users},
+    user::user_service::UserService,
 };
 use axum::extract::Path;
 use axum::{extract::State, http::StatusCode, response::IntoResponse, response::Json};
@@ -11,45 +13,40 @@ use pwhash::bcrypt;
 use serde_json::Value;
 
 #[debug_handler]
-pub async fn list_users(
-    State(pool): State<deadpool_diesel::postgres::Pool>,
-) -> Result<impl IntoResponse, (StatusCode, String)> {
-    let conn = pool.get().await.map_err(internal_error)?;
-    let res = conn
-        .interact(|conn| users::table.select(Users::as_select()).load(conn))
-        .await
-        .map_err(internal_error)?
-        .map_err(internal_error)?;
+pub async fn list_users() -> Result<impl IntoResponse, (StatusCode, String)> {
+    let user_service = ConcreteUserService::new();
+    let res: Result<Vec<Users>, diesel::result::Error> = user_service.fetch_all().await;
 
-    let json_response: Value = serde_json::json!({
+    if let Err(err) = res {
+        return Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Database error: {}", err),
+        ));
+    }
+
+    let json_response = serde_json::json!({
         "status": "ok",
-        "count": res.len(),
-        "objects": res
+        "objects": res.unwrap()
     });
 
     Ok(Json(json_response))
 }
 
 #[debug_handler]
-pub async fn get_user(
-    State(pool): State<deadpool_diesel::postgres::Pool>,
-    Path(user_id): Path<i32>,
-) -> Result<impl IntoResponse, (StatusCode, String)> {
-    let conn = pool.get().await.map_err(internal_error)?;
-    let res = conn
-        .interact(move |conn| {
-            users::table
-                .find(user_id)
-                .select(Users::as_select())
-                .load(conn)
-        })
-        .await
-        .map_err(internal_error)?
-        .map_err(internal_error)?;
+pub async fn get_user(Path(user_id): Path<i32>) -> Result<impl IntoResponse, (StatusCode, String)> {
+    let user_service = ConcreteUserService::new();
+    let res: Result<Vec<Users>, diesel::result::Error> = user_service.get(user_id).await;
+
+    if let Err(err) = res {
+        return Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Database error: {}", err),
+        ));
+    }
 
     let json_response = serde_json::json!({
         "status": "ok",
-        "object": res[0]
+        "object": res.unwrap()[0]
     });
 
     Ok(Json(json_response))
@@ -57,49 +54,43 @@ pub async fn get_user(
 
 #[debug_handler]
 pub async fn delete_user(
-    State(pool): State<deadpool_diesel::postgres::Pool>,
     Path(user_id): Path<i32>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
-    let conn = pool.get().await.map_err(internal_error)?;
+    let user_service = ConcreteUserService::new();
+    let res = user_service.delete(user_id).await;
 
-    let deleted_rows = conn
-        .interact(move |conn| diesel::delete(users::table.find(user_id)).execute(conn))
-        .await
-        .map_err(internal_error)?;
-
-    if deleted_rows == Ok(1) {
-        let json_response = serde_json::json!({
-            "status": "ok",
-            "message": "User deleted successfully",
-        });
-        Ok(Json(json_response))
-    } else {
-        // User with the specified ID not found
-        Err((StatusCode::NOT_FOUND, "User not found".to_string()))
+    if let Err(err) = res {
+        return Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Database error: {}", err),
+        ));
     }
+
+    let json_response = serde_json::json!({
+        "status": "ok",
+        "message": "User deleted successfully",
+    });
+
+    Ok(Json(json_response))
 }
 
 #[debug_handler]
 pub async fn create_user(
-    State(pool): State<deadpool_diesel::postgres::Pool>,
     Json(mut new_user): Json<NewUser>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
-    let conn = pool.get().await.map_err(internal_error)?;
-    new_user.password = bcrypt::hash(new_user.password).expect("Error hashing password");
-    let res = conn
-        .interact(|conn| {
-            diesel::insert_into(users::table)
-                .values(new_user)
-                .returning(Users::as_returning())
-                .get_result(conn)
-        })
-        .await
-        .map_err(internal_error)?
-        .map_err(internal_error)?;
+    let user_service = ConcreteUserService::new();
+    let res = user_service.insert(new_user).await;
+
+    if let Err(err) = res {
+        return Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Database error: {}", err),
+        ));
+    }
 
     let json_response = serde_json::json!({
         "status": "ok",
-        "object": res
+        "object": res.unwrap()
     });
 
     Ok(Json(json_response))

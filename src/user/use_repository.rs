@@ -19,8 +19,8 @@ use super::{
 pub trait UserRepository<T> {
     async fn insert(&self, user: NewUser) -> Result<T, Error>;
     async fn fetch_all(&self) -> Result<Vec<T>, Error>;
-    async fn get(&self, id: String) -> Result<T, Error>;
-    async fn delete(&self, id: String) -> Result<&str, Error>;
+    async fn get(&self, id: i32) -> Result<Vec<T>, Error>;
+    async fn delete(&self, id: i32) -> Result<&str, Error>;
 }
 
 pub struct ConcreteUserRepository {
@@ -48,20 +48,26 @@ impl UserRepository<Users> for ConcreteUserRepository {
     }
 
     async fn fetch_all(&self) -> Result<Vec<Users>, Error> {
-        // Implementation for fetching all users
-        // This is where you would query the database for all users
-        let conn = self.db_pool.get().await.map_err(internal_error).unwrap();
-        todo!()
+        let conn = self.db_pool.get().await.map_err(|err| Error::NotFound)?;
+
+        let res = conn
+            .interact(|conn| users::table.select(Users::as_select()).load(conn))
+            .await
+            .map_err(|err| Error::NotFound)?;
+        Ok(res?)
     }
 
-    async fn get(&self, id: String) -> Result<Users, Error> {
-        // Implementation for fetching a user by ID
-        // This is where you would query the database for a specific user
-        let conn = self.db_pool.get().await.map_err(internal_error).unwrap();
-        todo!()
+    async fn get(&self, id: i32) -> Result<Vec<Users>, Error> {
+        let conn = self.db_pool.get().await.map_err(|err| Error::NotFound)?;
+        let res = conn
+            .interact(move |conn| users::table.find(id).select(Users::as_select()).load(conn))
+            .await
+            .map_err(|err| Error::NotFound)?;
+
+        Ok(res?)
     }
 
-    async fn delete(&self, id: String) -> Result<&str, Error> {
+    async fn delete(&self, id: i32) -> Result<&str, Error> {
         // Implementation for deleting a user by ID
         // This is where you would delete the user from the database
         let conn = self.db_pool.get().await.map_err(internal_error).unwrap();
@@ -69,10 +75,10 @@ impl UserRepository<Users> for ConcreteUserRepository {
     }
 }
 
-// impl ConcreteUserRepository {
-//     pub fn new() -> Self {
-//         ConcreteUserRepository {
-//             db_pool: pool_creation(), // assuming pool_creation is defined
-//         }
-//     }
-// }
+impl ConcreteUserRepository {
+    pub fn new() -> Self {
+        ConcreteUserRepository {
+            db_pool: pool_creation(), // assuming pool_creation is defined
+        }
+    }
+}
