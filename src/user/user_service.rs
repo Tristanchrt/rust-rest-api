@@ -2,7 +2,7 @@ use axum::async_trait;
 
 use super::{
     models_users::{NewUser, Users},
-    use_repository::{ConcreteUserRepository, UserRepository},
+    user_repository::{ConcreteUserRepository, UserRepository},
 };
 
 use diesel::{

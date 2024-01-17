@@ -68,10 +68,12 @@ impl UserRepository<Users> for ConcreteUserRepository {
     }
 
     async fn delete(&self, id: i32) -> Result<&str, Error> {
-        // Implementation for deleting a user by ID
-        // This is where you would delete the user from the database
         let conn = self.db_pool.get().await.map_err(internal_error).unwrap();
-        todo!()
+        let _ = conn
+            .interact(move |conn| diesel::delete(users::table.find(id)).execute(conn))
+            .await
+            .map_err(|err| Error::NotFound)?;
+        Ok("Delete ok")
     }
 }
 
